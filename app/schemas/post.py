@@ -7,6 +7,9 @@ class PostBase(BaseModel):
     content: str
     published: bool = False
 
+    class Config:
+        orm_mode = True
+
 
 class PostUpdate(BaseModel):
     title: Optional[str] = None

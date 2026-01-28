@@ -1,3 +1,4 @@
-from .posts import Post
+from .posts import Posts
+from .users import Users
 
-__all__ = ["Post"]
+__all__ = ["Posts", "Users"]
