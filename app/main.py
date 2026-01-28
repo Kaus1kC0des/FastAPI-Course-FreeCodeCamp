@@ -1,32 +1,25 @@
-import os
-import time
-import app.models as models
-
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI
 from dotenv import load_dotenv
 from app.database import init_models
-from app.dependencies import get_db_sync, get_db_async
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
-from app.schemas import *
 from app.routes.posts import router as PostsRouter
-from app.logger import setup_logging
+from app.routes.users import router as UserRouter
+from app.routes.auth import router as AuthRouter
 
 load_dotenv()
 
-app = FastAPI()
+
+async def lifespan(app: FastAPI):
+    init_models()
+    print("Models created sucessfully!")
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(PostsRouter)
+app.include_router(UserRouter)
+app.include_router(AuthRouter)
 
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-
-@app.get("/sqlalchemy")
-async def test_posts(db: AsyncSession = Depends(get_db_async)):
-    query = select(models.Post).where(models.Post.id == 2)
-    post = await db.scalar(query)
-    print(post)
-    return {"status": "Success", "post": post}

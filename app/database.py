@@ -51,22 +51,3 @@ def init_models():
         Base.metadata.create_all(bind=sync_engine, checkfirst=True)
     except Exception as e:
         print(f"Error: {e}")  # Debug: print any errors
-
-
-if __name__ == "__main__":
-    from app.models.posts import Post
-
-    init_models()
-    # Verify tables were created
-    with sync_engine.connect() as conn:
-        result = conn.execute(
-            text(
-                """
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public'
-        """
-            )
-        )
-        tables = result.fetchall()
-        print(f"Tables created: {[table[0] for table in tables]}")

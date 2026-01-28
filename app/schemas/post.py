@@ -1,5 +1,7 @@
+from uuid import UUID
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class PostBase(BaseModel):
@@ -8,7 +10,7 @@ class PostBase(BaseModel):
     published: bool = False
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PostUpdate(BaseModel):
@@ -19,3 +21,8 @@ class PostUpdate(BaseModel):
 
 class PostCreate(PostBase):
     pass
+
+
+class PostResponse(PostBase):
+    id: UUID
+    created_at: datetime
