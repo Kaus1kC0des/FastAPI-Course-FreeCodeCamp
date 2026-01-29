@@ -13,7 +13,6 @@ class Posts(Base):
     title = Column(VARCHAR(255), nullable=False)
     content = Column(Text, nullable=False)
     published = Column(Boolean, default=True, server_default=text("true"))
-
     created_at = Column(
         TIMESTAMP(timezone=True),
         server_default=text("now()"),
@@ -21,3 +20,8 @@ class Posts(Base):
         default=datetime.now,
     )
     last_updated = Column(TIMESTAMP(timezone=True), onupdate=datetime.now)
+    author_id = Column(UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    author = relationship(
+        "Users",
+        back_populates="posts",
+    )
