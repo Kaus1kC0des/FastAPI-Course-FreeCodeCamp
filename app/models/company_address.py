@@ -1,12 +1,12 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy import Column, Text, DateTime, text, VARCHAR, Date, Integer, TEXT
+from sqlalchemy import Column, Text, Integer
 from app.database import Base
 
 
-class Address(Base):
-    __tablename__ = "address"
+class CompanyAddress(Base):
+    __tablename__ = "company_address"
 
-    user_id = Column(ForeignKey("users.id"), primary_key=True, unique=True)
+    company_id = Column(ForeignKey("company_details.id"), primary_key=True, unique=True)
     address = Column(Text)
     city = Column(Text)
     state = Column(Text)

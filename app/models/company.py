@@ -6,7 +6,13 @@ from app.database import Base
 
 class Company(Base):
     __tablename__ = "company_details"
-    company_id = Column(Integer, autoincrement=True, primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     company_name = Column(Text)
     department = Column(Text)
     title = Column(Text)
+    address = relationship(
+        "CompanyAddress",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
