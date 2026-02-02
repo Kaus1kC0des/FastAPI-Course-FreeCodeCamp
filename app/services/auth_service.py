@@ -1,4 +1,3 @@
-from uuid import UUID
 from typing import Annotated
 from datetime import timedelta, datetime
 from jose import JWTError, jwt
@@ -8,9 +7,9 @@ from fastapi.security import OAuth2PasswordBearer
 from app.schemas.auth import Token
 import os
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ACCESS_TOKEN_EXPIRY_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
-ALGORITHM = os.getenv("ALGORITHM")
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+ACCESS_TOKEN_EXPIRY_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 0))
+ALGORITHM = os.getenv("ALGORITHM", "")
 
 password_hash = PasswordHash.recommended()
 oauth_schema = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -41,7 +40,7 @@ def verify_access_token(
         user_id = out.get("user_id")
         if not user_id:
             raise credentials_exception
-        return UUID(user_id)
+        return user_id
     except JWTError:
         raise credentials_exception
 
