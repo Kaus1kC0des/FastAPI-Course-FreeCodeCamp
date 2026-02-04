@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, func, delete, update
 from app.schemas import PostCreate, PostUpdate, PostResponse
 from app.services.auth_service import get_current_user
-from uuid import UUID
+from app.services import post_service
 
 router = APIRouter(
     prefix="/posts", tags=["Posts"], dependencies=[Depends(get_current_user)]
@@ -21,9 +21,8 @@ async def get_all_posts(
     limit: int = Query(50, ge=1, le=100),
 ):
     try:
-        query = select(Posts).offset(offset).limit(limit).order_by(Posts.id)
-        results = await db.scalars(query)
-        return {"posts": results.all(), "offset": offset, "limit": limit}
+        result = await post_service.retrieve_posts(db, offset, limit)
+        return result
     except Exception as e:
         raise e
 
@@ -31,9 +30,7 @@ async def get_all_posts(
 @router.get("/latest", response_model=PostResponse)
 async def get_latest_post(db: AsyncSession = Depends(get_db_async)):
     try:
-        query = select(Posts).order_by(Posts.id.desc()).limit(1)
-        result = await db.scalar(query)
-        result.id = str(result.id)
+        result = await post_service.retrieve_latest_post(db)
         return result
     except Exception as e:
         raise e
@@ -42,19 +39,16 @@ async def get_latest_post(db: AsyncSession = Depends(get_db_async)):
 @router.get("/total")
 async def get_post_count(db: AsyncSession = Depends(get_db_async)):
     try:
-        query = select(func.count()).select_from(Posts)
-        result = db.scalar(query)
+        result = await post_service.retrieve_total_posts(db)
         return {"count": result}
     except Exception as e:
         raise e
 
 
 @router.get("/{id}", response_model=PostResponse)
-async def get_post_by_id(id: UUID, db: AsyncSession = Depends(get_db_async)):
+async def get_post_by_id(id: int, db: AsyncSession = Depends(get_db_async)):
     try:
-        query = select(Posts).where(Posts.id == id)
-        result = await db.scalar(query)
-        print(result)
+        result = await post_service.retrieve_post_by_id(id, db)
         return result
     except Exception as e:
         raise e
@@ -64,7 +58,7 @@ async def get_post_by_id(id: UUID, db: AsyncSession = Depends(get_db_async)):
 async def create_post(
     post: PostCreate,
     db: Annotated[AsyncSession, Depends(get_db_async)],
-    user_id: Annotated[UUID, Depends(get_current_user)],
+    user_id: Annotated[int, Depends(get_current_user)],
 ):
     try:
         print(f"{user_id=}")
@@ -82,7 +76,7 @@ async def create_post(
 
 
 @router.delete("/{id}", status_code=204)
-async def delete_post_by_id(id: UUID, db: AsyncSession = Depends(get_db_async)):
+async def delete_post_by_id(id: int, db: AsyncSession = Depends(get_db_async)):
     try:
         query = delete(Posts).where(Posts.id == id)
         await db.execute(query)
@@ -95,7 +89,7 @@ async def delete_post_by_id(id: UUID, db: AsyncSession = Depends(get_db_async)):
 
 @router.put("/{id}", status_code=200)
 async def update_post_by_id(
-    id: UUID, post: PostUpdate, db: AsyncSession = Depends(get_db_async)
+    id: int, post: PostUpdate, db: AsyncSession = Depends(get_db_async)
 ):
     try:
         query = (
