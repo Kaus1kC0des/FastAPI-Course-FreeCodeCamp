@@ -9,3 +9,4 @@ class PostTags(Base):
         Integer, ForeignKey("posts.id"), primary_key=True, nullable=False, index=True
     )
     tag_id = Column(Integer, ForeignKey("tags.id"), primary_key=True, nullable=False)
+

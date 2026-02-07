@@ -29,7 +29,6 @@ async_engine = create_async_engine(ASYNC_URL, pool_pre_ping=True)
 SyncSessionLocal = sessionmaker(
     bind=sync_engine,
     autoflush=False,
-    autocommit=True,
 )
 
 AsyncSessionLocal = async_sessionmaker(
