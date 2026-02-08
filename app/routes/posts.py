@@ -1,3 +1,4 @@
+import logging
 from app.models.post_metrics import PostMetrics
 from app.models.post_tags import PostTags
 from app.models.tags import Tags
@@ -13,7 +14,9 @@ from app.schemas import PostCreate, PostUpdate, PostResponse
 from app.services.auth_service import get_current_user
 from app.services import post_service
 
-router = APIRouter(prefix="/posts", tags=["Posts"])
+router = APIRouter(
+    prefix="/posts", tags=["Posts"], dependencies=[Depends(get_current_user)]
+)
 
 
 @router.get("/all", status_code=200)
@@ -42,7 +45,7 @@ async def get_latest_post(db: AsyncSession = Depends(get_db_async)):
 async def get_post_count(db: AsyncSession = Depends(get_db_async)):
     try:
         result = await post_service.retrieve_total_posts(db)
-        return {"count": result}
+        return result
     except Exception as e:
         raise e
 
@@ -63,29 +66,19 @@ async def create_post(
     user_id: Annotated[int, Depends(get_current_user)],
 ):
     try:
-        print(f"{user_id=}")
-        print(f"{type(user_id)=}")
-        query = insert(Posts).returning(Posts.id)
-        result = await db.scalar(query, [post.model_dump()])
-        await db.commit()
-        logging.log(
-            msg=f"post: {post} written into DB successfully", level=logging.INFO
-        )
-        return {"result": "Insertion successful", "id": result}
+        result = await post_service.create_post(post, db)
+        logging.info(f"User with {user_id=} has created a post")
+        return result
     except Exception as e:
-        await db.rollback()
         raise e
 
 
 @router.delete("/{id}", status_code=204)
 async def delete_post_by_id(id: int, db: AsyncSession = Depends(get_db_async)):
     try:
-        query = delete(Posts).where(Posts.id == id)
-        await db.execute(query)
-        await db.commit()
-        return {"result": "Post Deleted Sucessfully"}
+        result = await post_service.delete_post(id, db)
+        return result
     except Exception as e:
-        await db.rollback()
         raise e
 
 
@@ -94,20 +87,9 @@ async def update_post_by_id(
     id: int, post: PostUpdate, db: AsyncSession = Depends(get_db_async)
 ):
     try:
-        query = (
-            update(Posts)
-            .where(Posts.id == id)
-            .values(
-                title=post.title or None,
-                content=post.content or None,
-                published=post.published or None,
-            )
-        )
-        await db.execute(query, execution_options={"synchronize_session": False})
-        await db.commit()
-        return {"response": "Post Updated succesfully"}
+        result = await post_service.update_post(id, db)
+        return result
     except Exception as e:
-        await db.rollback()
         raise e
 
 

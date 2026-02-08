@@ -1,3 +1,5 @@
+from sqlalchemy.orm import selectinload
+from app.models.auth_details import UserAuth
 from app.dependencies import get_db_async
 from app.models.users import Users
 from app.services.auth_service import (
@@ -19,7 +21,11 @@ async def login(
     db: Annotated[AsyncSession, Depends(get_db_async)],
 ):
     try:
-        stmt = select(Users).where(Users.email == user_credentials.username)
+        stmt = (
+            select(Users)
+            .where(Users.email == user_credentials.username)
+            .options(selectinload(Users.auth))
+        )
         user = await db.scalar(stmt)
 
         if not user:
@@ -27,7 +33,7 @@ async def login(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"User does not exists"
             )
 
-        if verify_password(user_credentials.password, str(user.password)):
+        if verify_password(user_credentials.password, str(user.auth.password)):
             data = {"user_id": str(user.id), "role": "user"}
             token = create_access_token(data)
             return token

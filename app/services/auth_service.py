@@ -36,7 +36,7 @@ def verify_access_token(
     token: str | OAuth2PasswordBearer, credentials_exception: Exception
 ):
     try:
-        out = jwt.decode(token, SECRET_KEY, ALGORITHM)
+        out = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = out.get("user_id")
         if not user_id:
             raise credentials_exception

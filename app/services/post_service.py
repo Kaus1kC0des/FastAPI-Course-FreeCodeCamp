@@ -2,10 +2,14 @@ from app.models import Posts
 from app.models.post_tags import PostTags
 from app.models.tags import Tags
 from app.models.post_metrics import PostMetrics
+from app.schemas import PostUpdate, PostCreate
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete, update, insert
 from sqlalchemy.orm import selectinload
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 
 async def retrieve_total_posts(db: AsyncSession):
@@ -66,8 +70,59 @@ async def fetch_posts(
     offset: int | None = None,
     limit: int | None = None,
 ):
-    query = base_post_query()
-    query = apply_post_filters(query, post_id=post_id, user_id=user_id, tag=tag)
-    query = order_and_paginate(query, latest=latest, offset=offset, limit=limit)
-    results = await db.scalars(query)
-    return results
+    try:
+        query = base_post_query()
+        query = apply_post_filters(query, post_id=post_id, user_id=user_id, tag=tag)
+        query = order_and_paginate(query, latest=latest, offset=offset, limit=limit)
+        results = await db.scalars(query)
+        logger.info(f"Post with {post_id=} was returned")
+        if post_id or latest:
+            return results.first()
+        return results.all()
+    except Exception as e:
+        logging.error(f"Error {e} occurred")
+        raise e
+
+
+async def update_post(id: int, post: PostUpdate, db: AsyncSession):
+    try:
+        query = (
+            update(Posts)
+            .where(Posts.id == id)
+            .values(
+                title=post.title or None,
+                content=post.content or None,
+            )
+        )
+        await db.execute(query, execution_options={"synchronize_session": False})
+        await db.commit()
+        return {"response": "Post Updated succesfully"}
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error {e} occurred")
+        raise e
+
+
+async def delete_post(id: int, db: AsyncSession):
+    try:
+        query = delete(Posts).where(Posts.id == id)
+        await db.execute(query)
+        await db.commit()
+        logging.info(f"Post with {id=} has been deleted")
+        return {"result": "Post Deleted Sucessfully"}
+    except Exception as e:
+        logger.error(f"Error {e} occurred")
+        await db.rollback()
+        raise e
+
+
+async def create_post(post: PostCreate, db: AsyncSession):
+    try:
+        query = insert(Posts).returning(Posts.id)
+        result = await db.scalar(query, [post.model_dump()])
+        await db.commit()
+        return {"result": "Insertion successful", "id": result}
+    except Exception as e:
+        logger.error(f"Error {e} occurred")
+        await db.rollback()
+        raise e
