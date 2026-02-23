@@ -1,6 +1,7 @@
 import os
 from logging.config import fileConfig
 from app.database import Base
+import app.models  # noqa: F401 — ensures all models are registered on Base.metadata
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context

@@ -1,4 +1,3 @@
-import email
 from sqlalchemy import Column, Text, VARCHAR, Date, Integer, TEXT
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -20,8 +19,6 @@ class Users(Base):
     birth_date = Column(Date)
     image = Column(TEXT)
     role = Column(VARCHAR(20))
+    clerk_user_id = Column(VARCHAR(255), nullable=True, unique=True, index=True)
 
-    auth = relationship(
-        "UserAuth", cascade="all, delete-orphan", uselist=False, passive_deletes=True
-    )
     posts = relationship("Posts", cascade="all, delete-orphan", back_populates="author")
