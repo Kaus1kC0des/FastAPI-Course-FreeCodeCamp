@@ -14,20 +14,14 @@ router = APIRouter(prefix="/users", tags=["Users"])
 async def create_user_route(
     user: UserCreate, db: Annotated[AsyncSession, Depends(get_db_async)]
 ):
-    try:
-        result = await user_service.create_user(user, db)
-        return result
-    except Exception as e:
-        raise e
+    result = await user_service.create_user(user, db)
+    return result
 
 
 @router.get("/{id}", status_code=status.HTTP_200_OK, response_model=UserResponse)
 async def get_user_route(id: int, db: Annotated[AsyncSession, Depends(get_db_async)]):
-    try:
-        result = await user_service.get_user(id, db)
-        return result
-    except Exception as e:
-        raise e
+    result = await user_service.get_user(id, db)
+    return result
 
 
 @router.delete("/delete")
@@ -35,8 +29,5 @@ async def delete_user(
     user_id: Annotated[int, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db_async)],
 ):
-    try:
-        result = await user_service.delete_user(user_id, db)
-        return result
-    except Exception as e:
-        raise e
+    result = await user_service.delete_user(user_id, db)
+    return result

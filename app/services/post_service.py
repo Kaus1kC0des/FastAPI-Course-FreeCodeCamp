@@ -6,6 +6,7 @@ from app.schemas import PostUpdate, PostCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete, update, insert
 from sqlalchemy.orm import selectinload
+from fastapi import HTTPException, status
 import logging
 import os
 
@@ -18,7 +19,8 @@ async def retrieve_total_posts(db: AsyncSession):
         result = await db.scalar(query)
         return {"count": result}
     except Exception as e:
-        raise e
+        logger.error(f"Error {e} occurred")
+        raise
 
 
 def base_post_query():
@@ -75,13 +77,28 @@ async def fetch_posts(
         query = apply_post_filters(query, post_id=post_id, user_id=user_id, tag=tag)
         query = order_and_paginate(query, latest=latest, offset=offset, limit=limit)
         results = await db.scalars(query)
-        logger.info(f"Post with {post_id=} was returned")
+
         if post_id or latest:
-            return results.first()
+            result = results.first()
+            if not result:
+                if post_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Post with id = {post_id} not found"
+                    )
+                else:  # latest
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="No posts available"
+                    )
+            logger.info(f"Post with {post_id=} was returned")
+            return result
         return results.all()
+    except HTTPException:
+        raise
     except Exception as e:
-        logging.error(f"Error {e} occurred")
-        raise e
+        logger.error(f"Error {e} occurred")
+        raise
 
 
 async def update_post(id: int, post: PostUpdate, db: AsyncSession):
@@ -100,7 +117,7 @@ async def update_post(id: int, post: PostUpdate, db: AsyncSession):
     except Exception as e:
         await db.rollback()
         logger.error(f"Error {e} occurred")
-        raise e
+        raise
 
 
 async def delete_post(id: int, db: AsyncSession):
@@ -113,7 +130,7 @@ async def delete_post(id: int, db: AsyncSession):
     except Exception as e:
         logger.error(f"Error {e} occurred")
         await db.rollback()
-        raise e
+        raise
 
 
 async def create_post(post: PostCreate, db: AsyncSession):
@@ -125,4 +142,4 @@ async def create_post(post: PostCreate, db: AsyncSession):
     except Exception as e:
         logger.error(f"Error {e} occurred")
         await db.rollback()
-        raise e
+        raise

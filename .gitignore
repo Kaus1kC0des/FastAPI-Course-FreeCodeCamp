@@ -141,3 +141,9 @@ cython_debug/
 
 # http
 *.http
+
+# Logs
+logs/
+
+# Node Modules
+node_modules/

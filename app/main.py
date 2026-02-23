@@ -8,6 +8,7 @@ from app.database import init_models
 from app.routes.posts import router as PostsRouter
 from app.routes.users import router as UserRouter
 from app.routes.auth import router as AuthRouter
+from app.middleware.logging_middleware import logging_middleware
 import sentry_sdk
 import logging
 import os
@@ -34,6 +35,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(PostsRouter)
 app.include_router(UserRouter)
 app.include_router(AuthRouter)
+app.middleware("http")(logging_middleware)
 
 
 @app.get("/")

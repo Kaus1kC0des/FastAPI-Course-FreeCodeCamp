@@ -25,6 +25,7 @@ async def create_user(user: UserCreate, db: AsyncSession):
     except Exception as e:
         logging.error(f"Error {e} occurred")
         await db.rollback()
+        raise
 
 
 async def get_user(id: int, db: AsyncSession):
@@ -36,11 +37,10 @@ async def get_user(id: int, db: AsyncSession):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with id = {id} not found",
             )
-            logging.info(f"User with {id=} not found")
         return result
     except Exception as e:
         logging.error(f"Error {e} occurred")
-        raise e
+        raise
 
 
 async def delete_user(user_id: int, db: AsyncSession):
@@ -51,4 +51,5 @@ async def delete_user(user_id: int, db: AsyncSession):
         logging.info(f"User with {user_id=} deleted")
         return {"response": f"User with ID: {user_id} deleted"}
     except Exception as e:
-        raise e
+        await db.rollback()
+        raise
