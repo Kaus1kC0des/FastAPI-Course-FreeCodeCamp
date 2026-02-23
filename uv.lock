@@ -20,6 +20,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/83/36/cd9cb6101e81e39076b2fbe303bfa3c85ca34e55142b0324fcbf22c5c6e2/alembic-1.18.1-py3-none-any.whl", hash = "sha256:f1c3b0920b87134e851c25f1f7f236d8a332c34b75416802d06971df5d1b7810", size = 260973, upload-time = "2026-01-14T18:53:17.533Z" },
 ]
 
+[package.optional-dependencies]
+tz = [
+    { name = "tzdata" },
+]
+
 [[package]]
 name = "annotated-doc"
 version = "0.0.4"
@@ -572,7 +577,7 @@ name = "fastapi-course-freecodecamp"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "alembic" },
+    { name = "alembic", extra = ["tz"] },
     { name = "asyncpg" },
     { name = "bcrypt" },
     { name = "black" },
@@ -600,7 +605,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alembic", specifier = ">=1.18.1" },
+    { name = "alembic", extras = ["tz"], specifier = ">=1.18.1" },
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "bcrypt", specifier = "==4.3.0" },
     { name = "black", specifier = ">=25.12.0" },
