@@ -3,23 +3,29 @@ import {Button} from "@/components/ui/button";
 
 export default function Home() {
     return (
-        <main className="min-h-screen bg-gray-50 bg-contain bg-center"
-              style={{backgroundImage: "url('/images/home-page-background.jpg"}}>
-            <section className="max-w-5xl mx-auto px-6 py-20 text-center">
-                <h1 className="text-5xl font-bold mb-6">
-                    FastAPI + Next.js
+        <div className="min-h-screen bg-gray-50 flex items-center justify-start">
+            <section className="max-w-5xl px-4 md:px-6 text-left ml-4 md:ml-[15%] mr-4">
+                <h1 className="text-4xl md:text-7xl font-normal mb-4 md:mb-6 tracking-tight"
+                    style={{
+                        fontFamily: "sohne, 'Helvetica Neue', Arial, sans-serif",
+                        letterSpacing: "-0.05em",
+                    }}
+                >
+                    Tech Ideas, Experiences & Strategies
                 </h1>
 
-                <p className="text-lg text-gray-600 mb-8">
-                    Clean frontend. Solid backend. Modern stack.
+                <p className="text-lg md:text-2xl text-gray-800 mb-6 md:mb-8"
+                   style={{fontFamily: "sohne, 'Helvetica Neue', Arial, sans-serif"}}
+                >
+                    A place to share your thoughts, feelings and ideas with the world!
                 </p>
 
-                <Button className="bg-sky-600 hover:bg-black lg:px-8 lg:py-8 ">
+                <Button className="bg-black hover:bg-blue-500 px-6 md:px-12 py-4 md:py-6 text-base md:text-xl rounded-full">
                     <Link href="/login">
-                        Get Started
+                        Let's get you talking!
                     </Link>
                 </Button>
             </section>
-        </main>
+        </div>
     );
 }
