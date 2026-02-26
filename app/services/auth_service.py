@@ -1,54 +1,52 @@
-from typing import Annotated
-from datetime import timedelta, datetime
-from jose import JWTError, jwt
-from pwdlib import PasswordHash
-from fastapi import Depends, status, HTTPException
-from fastapi.security import OAuth2PasswordBearer
-from app.schemas.auth import Token
 import os
+import logging
+import jwt
+from jwt import PyJWKClient
+from typing import Annotated
+from fastapi import Depends, status, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.dependencies import get_db_async
 
-SECRET_KEY = os.getenv("SECRET_KEY", "")
-ACCESS_TOKEN_EXPIRY_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 0))
-ALGORITHM = os.getenv("ALGORITHM", "")
+logger = logging.getLogger(__name__)
 
-password_hash = PasswordHash.recommended()
-oauth_schema = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-
-def hash(password: str):
-    return password_hash.hash(password=password)
-
-
-def verify_password(password: str, original: str):
-    return password_hash.verify(password, original)
-
-
-def create_access_token(data: dict, expires_on: float | int = 0):
-    to_encode = data.copy()
-    if not expires_on:
-        expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRY_MINUTES)
-        to_encode.update({"exp": expire})
-    token = jwt.encode(claims=to_encode, key=SECRET_KEY, algorithm=ALGORITHM)
-    return Token(access_token=token, token_type="bearer")
+CLERK_JWKS_URL = os.getenv("CLERK_JWKS_URL", "")
+jwks_client = PyJWKClient(CLERK_JWKS_URL)
+bearer_scheme = HTTPBearer()
 
 
-def verify_access_token(
-    token: str | OAuth2PasswordBearer, credentials_exception: Exception
-):
+def verify_clerk_token(token: str) -> str:
     try:
-        out = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = out.get("user_id")
-        if not user_id:
-            raise credentials_exception
-        return user_id
-    except JWTError:
-        raise credentials_exception
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        payload = jwt.decode(token, signing_key.key, algorithms=["RS256"])
+        clerk_user_id = payload.get("sub")
+        if not clerk_user_id:
+            raise ValueError("No sub claim in token")
+        return clerk_user_id
+    except Exception as e:
+        logger.error(f"Token verification failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
-def get_current_user(token: Annotated[OAuth2PasswordBearer, Depends(oauth_schema)]):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="You do not have access to this resource, could not validate credentials!",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    return verify_access_token(token, credentials_exception)
+async def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)],
+    db: Annotated[AsyncSession, Depends(get_db_async)],
+) -> int:
+    from app.models.users import Users
+
+    clerk_user_id = verify_clerk_token(credentials.credentials)
+
+    stmt = select(Users.id).where(Users.clerk_user_id == clerk_user_id)
+    user_id = await db.scalar(stmt)
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found. Please register.",
+        )
+    return user_id

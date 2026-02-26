@@ -1,8 +1,5 @@
-import logging
-from app.models.auth_details import UserAuth
 from app.models import *
 from app.schemas import *
-from app.services.auth_service import hash
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert, select, delete
 from fastapi import HTTPException, status
@@ -11,19 +8,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-async def create_user(user: UserCreate, db: AsyncSession):
+async def create_user(data: dict, db: AsyncSession):
     try:
-        data = user.model_dump(exclude={"confirm_password", "password"})
-        password = hash(user.password)
-        user_stmt = insert(Users).values(data).returning(Users.id)
-        user_id = await db.scalar(user_stmt)
-        auth_stmt = insert(UserAuth).values({"id": user_id, "password": password})
-        await db.execute(auth_stmt)
+        new_user = Users(
+            clerk_user_id=data["id"],
+            first_name=data["first_name"],
+            last_name=data["last_name"],
+            email=data["email_addresses"][0]["email_address"],
+            user_name=data.get("username") or data["id"],
+            image=data.get("image_url"),
+        )
+        db.add(new_user)
         await db.commit()
-        logging.info(f"User with {user_id=} created")
-        return {"result": "User Created Successfully!", "id": user_id}
+        await db.refresh(new_user)
+        logger.info(f"User with clerk_user_id={new_user.clerk_user_id} created")
+        return {"result": "User Created Successfully!", "id": new_user.id}
     except Exception as e:
-        logging.error(f"Error {e} occurred")
+        logger.error(f"Error {e} occurred")
         await db.rollback()
         raise
 

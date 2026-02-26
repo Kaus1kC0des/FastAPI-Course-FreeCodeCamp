@@ -11,7 +11,6 @@ from datetime import date
 
 
 class UserBase(BaseModel):
-    id: int
     first_name: str = Field(min_length=2, alias="firstName")
     last_name: str = Field(min_length=1, alias="lastName")
     age: int
@@ -35,38 +34,5 @@ class UserBase(BaseModel):
         return date(year, month, day)
 
 
-class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=16)
-    confirm_password: str = Field(min_length=8, max_length=16)
-
-    @model_validator(mode="after")
-    def check_passwords_match(self):
-        if self.password != self.confirm_password:
-            raise ValueError(f"Passwords don't match!")
-        return self
-
-
 class UserResponse(UserBase):
-    pass
-
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class UserPayment(BaseModel):
-    card_expiry: date = Field(alias="cardExpire")
-    card_number: str = Field(alias="cardNumber")
-    card_type: str = Field(alias="cardType")
-    currency: str
-    iban: str
-
-    @field_validator("card_expiry", mode="before")
-    @classmethod
-    def validate_expiry(cls, expiry: str):
-        month, year = expiry.split("/")
-        year = 2000 + int(year)
-        month = int(month)
-        last_day = monthrange(year, month)[1]
-        return date(year, month, last_day)
+    id: int

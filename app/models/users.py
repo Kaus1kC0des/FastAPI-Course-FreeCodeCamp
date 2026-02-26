@@ -2,7 +2,6 @@ from sqlalchemy import Column, Text, VARCHAR, Date, Integer, TEXT
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from app.database import Base
-from app.models.enums import GenderEnum
 
 
 class Users(Base):
@@ -11,14 +10,11 @@ class Users(Base):
     id = Column(Integer, primary_key=True)
     first_name = Column(VARCHAR(255), nullable=False)
     last_name = Column(VARCHAR(255), nullable=False)
-    age = Column(Integer)
-    gender = Column(ENUM(GenderEnum, name="gender_enum"))
     phone = Column(Text)
     email = Column(Text, nullable=False, unique=True)
-    user_name = Column(VARCHAR(128), nullable=False)
-    birth_date = Column(Date)
+    username = Column(VARCHAR(128), nullable=False)
     image = Column(TEXT)
-    role = Column(VARCHAR(20))
+    role = Column(VARCHAR(20), default="user")
     clerk_user_id = Column(VARCHAR(255), nullable=True, unique=True, index=True)
 
     posts = relationship("Posts", cascade="all, delete-orphan", back_populates="author")

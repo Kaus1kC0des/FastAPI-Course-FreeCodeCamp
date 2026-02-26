@@ -26,6 +26,7 @@ dependencies = [
     "redoc>=0.2.3",
     "sentry-sdk>=2.50.0",
     "sqlalchemy[asyncio]>=2.0.45",
+    "svix>=1.86.0",
     "uuid-utils>=0.14.0",
     "uvicorn>=0.40.0",
 ]
