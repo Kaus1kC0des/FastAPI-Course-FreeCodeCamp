@@ -1,7 +1,6 @@
 from app.models import *
-from app.schemas import *
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import insert, select, delete
+from sqlalchemy import select, delete
 from fastapi import HTTPException, status
 import logging
 
@@ -15,7 +14,7 @@ async def create_user(data: dict, db: AsyncSession):
             first_name=data["first_name"],
             last_name=data["last_name"],
             email=data["email_addresses"][0]["email_address"],
-            user_name=data.get("username") or data["id"],
+            username=data.get("username") or data["id"],
             image=data.get("image_url"),
         )
         db.add(new_user)
@@ -29,9 +28,9 @@ async def create_user(data: dict, db: AsyncSession):
         raise
 
 
-async def get_user(id: int, db: AsyncSession):
+async def get_user(user_id: int, db: AsyncSession):
     try:
-        stmt = select(Users).where(Users.id == id)
+        stmt = select(Users).where(Users.id == user_id)
         result = await db.scalar(stmt)
         if not result:
             raise HTTPException(
@@ -44,13 +43,20 @@ async def get_user(id: int, db: AsyncSession):
         raise
 
 
-async def delete_user(user_id: int, db: AsyncSession):
+async def delete_user(data: dict, db: AsyncSession):
     try:
-        stmt = delete(Users).where(Users.id == user_id)
-        await db.scalar(stmt)
+        user_id = data.get("id", "")
+        stmt = delete(Users).where(Users.clerk_user_id == user_id)
+        await db.execute(stmt)
         await db.commit()
-        logging.info(f"User with {user_id=} deleted")
-        return {"response": f"User with ID: {user_id} deleted"}
+        message = f"User with {user_id=} deleted"
+        logging.info(message)
+        return {"response": message}
     except Exception as e:
+        tb = e.__traceback__
+        logging.error(
+            msg="Error occurred. Check further details:",
+            exc_info=e.with_traceback(tb),
+        )
         await db.rollback()
         raise
