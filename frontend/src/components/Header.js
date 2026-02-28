@@ -5,6 +5,7 @@ import {
     SignedOut,
     UserButton,
 } from '@clerk/nextjs';
+import {SidebarTrigger} from "@/components/ui/sidebar";
 import {Button} from "@/components/ui/button";
 import {Fragment} from "react";
 import Link from "next/link"
@@ -15,17 +16,22 @@ export default function Header() {
     return (
         <Fragment>
             <header className="flex justify-between items-center p-4 gap-4 h-19 align-middle border-b border-black">
-                <div
-                    className="ml-[15%] header-brandname text-3xl font-bold"
-                    style={{
-                        fontFamily: "Fixedsys62, sohne, 'Helvetica Neue', Arial, sans-serif",
-                        letterSpacing: "-0.05em",
-                        fontSize: "1.75em"
-                    }}
-                >
-                    TECHNOLOOGIA
+                <div className="flex items-center gap-2 ml-5">
+                    <SignedIn>
+                        <SidebarTrigger/>
+                    </SignedIn>
+                    <div
+                        className="header-brandname text-3xl font-bold"
+                        style={{
+                            fontFamily: "Fixedsys62, sohne, 'Helvetica Neue', Arial, sans-serif",
+                            letterSpacing: "-0.05em",
+                            fontSize: "1.75em"
+                        }}
+                    >
+                        TECHNOLOOGIA
+                    </div>
                 </div>
-                <div className="flex gap-4 items-center mr-[15%]">
+                <div className="flex gap-4 items-center">
                     <SignedOut>
                         <SignInButton mode="redirect" forceRedirectUrl="/home"/>
                         <SignUpButton mode="redirect" forceRedirectUrl="/home">
