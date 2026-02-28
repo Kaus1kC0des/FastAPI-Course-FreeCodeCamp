@@ -5,7 +5,11 @@ import {
     SignedOut,
     UserButton,
 } from '@clerk/nextjs';
+import {Button} from "@/components/ui/button";
 import {Fragment} from "react";
+import Link from "next/link"
+import {SquarePen} from "lucide-react"
+
 
 export default function Header() {
     return (
@@ -23,8 +27,8 @@ export default function Header() {
                 </div>
                 <div className="flex gap-4 items-center mr-[15%]">
                     <SignedOut>
-                        <SignInButton mode="redirect"/>
-                        <SignUpButton mode="redirect">
+                        <SignInButton mode="redirect" forceRedirectUrl="/home"/>
+                        <SignUpButton mode="redirect" forceRedirectUrl="/home">
                             <button
                                 className="bg-[#6c47ff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
                                 Sign Up
@@ -32,7 +36,13 @@ export default function Header() {
                         </SignUpButton>
                     </SignedOut>
 
-                    <SignedIn>
+                    <SignedIn afterSignInUrl="/home">
+                        <Link href="/new-story">
+                            <Button className="new-story" variant="outline">
+                                <SquarePen className="ml-1.5"/>
+                                <p className="overflow-hidden">New Story</p>
+                            </Button>
+                        </Link>
                         <UserButton/>
                     </SignedIn>
                 </div>
