@@ -6,7 +6,6 @@ from datetime import datetime
 
 
 class PostBase(BaseModel):
-    id: int
     title: str
     content: str
 
@@ -20,7 +19,6 @@ class PostUpdate(BaseModel):
 
 
 class PostCreate(PostBase):
-    author_id: int = Field(alias="userId")
     tags: List[str]
 
 
