@@ -27,7 +27,7 @@ export default function RootLayout({children}) {
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
-            <SidebarProvider defaultOpen={false}>
+            <SidebarProvider defaultOpen={true}>
                 <AppSidebar/>
                 <div className="flex flex-col flex-1">
                     <Header/>

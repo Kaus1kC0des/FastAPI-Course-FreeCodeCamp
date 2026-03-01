@@ -127,6 +127,16 @@
     }
 }
 
+/* Sidebar offset below header */
+[data-slot="sidebar-container"] {
+    top: 4.75rem !important;
+    height: calc(100svh - 4.75rem) !important;
+}
+
+[data-slot="sidebar-gap"] {
+    display: none !important;
+}
+
 /* BlockNote editor overrides */
 .bn-container {
     background: transparent !important;
@@ -140,4 +150,9 @@
     line-height: 1.8 !important;
     color: #1a1a1a !important;
     padding: 0 !important;
+}
+
+.sidebar-item {
+    margin-top: 10px;
+    margin-left: 15px
 }
