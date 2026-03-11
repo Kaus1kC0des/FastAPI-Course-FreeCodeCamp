@@ -1,10 +1,11 @@
+from app.services import tag_service
 from app.models import Posts
 from app.models.post_tags import PostTags
 from app.models.tags import Tags
 from app.models.post_metrics import PostMetrics
 from app.schemas import PostUpdate, PostCreate
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, delete, update, insert
+from sqlalchemy import select, func, delete, update
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 import logging
@@ -84,12 +85,12 @@ async def fetch_posts(
                 if post_id:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail=f"Post with id = {post_id} not found"
+                        detail=f"Post with id = {post_id} not found",
                     )
                 else:  # latest
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail="No posts available"
+                        detail="No posts available",
                     )
             logger.info(f"Post with {post_id=} was returned")
             return result
@@ -101,11 +102,11 @@ async def fetch_posts(
         raise
 
 
-async def update_post(id: int, post: PostUpdate, db: AsyncSession):
+async def update_post(post_id: int, post: PostUpdate, db: AsyncSession):
     try:
         query = (
             update(Posts)
-            .where(Posts.id == id)
+            .where(Posts.id == post_id)
             .values(
                 title=post.title or None,
                 content=post.content or None,
@@ -113,33 +114,38 @@ async def update_post(id: int, post: PostUpdate, db: AsyncSession):
         )
         await db.execute(query, execution_options={"synchronize_session": False})
         await db.commit()
-        return {"response": "Post Updated succesfully"}
+        return {"response": "Post Updated successfully"}
     except Exception as e:
         await db.rollback()
         logger.error(f"Error {e} occurred")
         raise
 
 
-async def delete_post(id: int, db: AsyncSession):
+async def delete_post(post_id: int, db: AsyncSession):
     try:
-        query = delete(Posts).where(Posts.id == id)
+        query = delete(Posts).where(Posts.id == post_id)
         await db.execute(query)
         await db.commit()
         logging.info(f"Post with {id=} has been deleted")
-        return {"result": "Post Deleted Sucessfully"}
+        return {"result": "Post Deleted Successfully"}
     except Exception as e:
         logger.error(f"Error {e} occurred")
         await db.rollback()
         raise
 
 
-async def create_post(post: PostCreate, db: AsyncSession):
+async def create_post(user_id: int, post: PostCreate, db: AsyncSession):
     try:
-        query = insert(Posts).returning(Posts.id)
-        result = await db.scalar(query, [post.model_dump()])
+        new_post = Posts(**post.model_dump(exclude={"tags"}), author_id=user_id)
+        db.add(new_post)
+        await db.flush()
+        for tag_name in post.tags:
+            tag = await tag_service.get_or_create_tag(db, tag_name)
+            db.add(PostTags(post_id=new_post.id, tag_id=tag.id))
         await db.commit()
-        return {"result": "Insertion successful", "id": result}
+        logger.info(f"Post with {new_post.id} created by {user_id}")
+        return {"id": new_post.id}
     except Exception as e:
-        logger.error(f"Error {e} occurred")
         await db.rollback()
+        logger.error(f"Error {e} occurred")
         raise

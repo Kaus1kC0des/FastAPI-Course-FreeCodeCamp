@@ -30,7 +30,9 @@ async def get_all_posts(
 
 
 @router.get("/latest", response_model=PostResponse)
-async def get_latest_post(db: AsyncSession = Depends(get_db_async)):
+async def get_latest_post(
+    db: AsyncSession = Depends(get_db_async), user_id: int = Depends(get_current_user)
+):
     result = await post_service.fetch_posts(db, latest=True)
     return result
 
@@ -53,9 +55,9 @@ async def create_post(
     db: Annotated[AsyncSession, Depends(get_db_async)],
     user_id: Annotated[int, Depends(get_current_user)],
 ):
-    result = await post_service.create_post(post, db)
-    logging.info(f"User with {user_id=} has created a post")
-    return result
+    post_id = await post_service.create_post(user_id, post, db)
+    logging.info(f"User with {user_id=} created a new post with {post_id=}")
+    return {"result": "New Post Created", "post_id": post_id}
 
 
 @router.delete("/{id}", status_code=204)
