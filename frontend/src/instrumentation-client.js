@@ -4,8 +4,11 @@
 
 import * as Sentry from "@sentry/nextjs";
 
-Sentry.init({
-  dsn: "https://f2dbbc18b857f912b169af72701de6fe@o4508898590064640.ingest.de.sentry.io/4510933593161808",
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+if (dsn) {
+  Sentry.init({
+  dsn,
 
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
@@ -26,6 +29,7 @@ Sentry.init({
   // Enable sending user PII (Personally Identifiable Information)
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
-});
+  });
+}
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

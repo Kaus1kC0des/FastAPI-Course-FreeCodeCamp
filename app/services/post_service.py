@@ -1,3 +1,5 @@
+from typing import List
+from sqlalchemy.orm import defer
 from app.services import tag_service
 from app.models import Posts
 from app.models.post_tags import PostTags
@@ -24,11 +26,14 @@ async def retrieve_total_posts(db: AsyncSession):
         raise
 
 
-def base_post_query():
+def base_post_query(no_content: bool | None = False):
+    options = [selectinload(Posts.author), selectinload(Posts.tags)]
+    if no_content:
+        options.append(defer(Posts.content))
     return (
         select(Posts)
         .join(PostMetrics, PostMetrics.post_id == Posts.id, isouter=True)
-        .options(selectinload(Posts.author), selectinload(Posts.tags))
+        .options(*options)
     )
 
 
@@ -68,13 +73,14 @@ async def fetch_posts(
     *,
     post_id: int | None = None,
     user_id: int | None = None,
-    tag: str | None = None,
+    tag: str | List[str] | None = None,
     latest: bool | None = None,
     offset: int | None = None,
     limit: int | None = None,
+    no_content: bool | None = False,
 ):
     try:
-        query = base_post_query()
+        query = base_post_query(no_content=no_content)
         query = apply_post_filters(query, post_id=post_id, user_id=user_id, tag=tag)
         query = order_and_paginate(query, latest=latest, offset=offset, limit=limit)
         results = await db.scalars(query)

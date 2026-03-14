@@ -1,7 +1,5 @@
-from pydantic import Field
-from typing import List
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import Field, BaseModel, ConfigDict
+from typing import List, Optional
 from datetime import datetime
 
 
@@ -9,8 +7,7 @@ class PostBase(BaseModel):
     title: str
     content: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PostUpdate(BaseModel):
@@ -22,15 +19,48 @@ class PostCreate(PostBase):
     tags: List[str]
 
 
-class DummyPostCreate(BaseModel):
-    title: str
-    content: str = Field(alias="body")
-    tags: list[str]
-    reactions: dict
-    views: int
-    author_id: int = Field(alias="userId")
-
-
 class PostResponse(PostBase):
     id: int
     created_at: datetime
+
+
+class PostTagSummary(BaseModel):
+    id: int
+    tag: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PostAuthorSummary(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    username: str
+    image: Optional[str] = None
+    role: Optional[str] = None
+    email: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PostListResponse(BaseModel):
+    id: int
+    title: str
+    created_at: datetime
+    last_updated: Optional[datetime] = None
+    author_id: int
+    tags: List[PostTagSummary] = []
+    author: PostAuthorSummary
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PostDetailResponse(PostBase):
+    id: int
+    created_at: datetime
+    last_updated: Optional[datetime] = None
+    author_id: int
+    tags: List[PostTagSummary] = []
+    author: PostAuthorSummary
+
+    model_config = ConfigDict(from_attributes=True)
