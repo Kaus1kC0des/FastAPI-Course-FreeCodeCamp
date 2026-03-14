@@ -1,13 +1,16 @@
 "use client";
 import PostCard from "@/components/PostCard";
 import {useEffect, useState} from "react";
+import {useParams} from "next/navigation";
 import {api} from "@/lib/api";
 import {useAuth} from "@clerk/nextjs";
 import {AlertMessage} from "@/components/AlertMessage";
 import {Skeleton} from "@/components/ui/skeleton";
 import {mapPostForCard} from "@/lib/utils";
 
+
 export default function HomePage() {
+    const {tag} = useParams();
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -17,7 +20,7 @@ export default function HomePage() {
         const fetchData = async () => {
             try {
                 const token = await getToken();
-                const response = await api.get("/posts/all", {
+                const response = await api.get(`/posts/tags/${tag}`, {
                     headers: {Authorization: `Bearer ${token}`},
                 });
                 const mappedPosts = Array.isArray(response.data)
@@ -35,13 +38,13 @@ export default function HomePage() {
         };
 
         fetchData();
-    }, [getToken]);
+    }, [getToken, tag]);
 
     return (
         <main className="mx-auto w-full max-w-6xl px-6 py-10">
             <section className="mb-8 space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900">Latest stories</h1>
-                <p className="text-sm text-gray-600">Catch up with the latest news...</p>
+                <h1 className="text-3xl font-bold text-gray-900">#{tag} stories</h1>
+                <p className="text-sm text-gray-600">Posts filtered by this tag.</p>
             </section>
 
             <section className="space-y-4">

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, ForeignKey, BigInteger
 from app.database import Base
 from sqlalchemy.orm import relationship
 
@@ -6,10 +6,10 @@ from sqlalchemy.orm import relationship
 class PostMetrics(Base):
     __tablename__ = "post_metrics"
 
-    post_id = Column(Integer, ForeignKey("posts.id"), primary_key=True)
-    likes = Column(Integer, nullable=False, default=0)
-    dislikes = Column(Integer, nullable=False, default=0)
-    views = Column(Integer, nullable=False, default=0)
+    post_id = Column(BigInteger, ForeignKey("posts.id"), primary_key=True)
+    likes = Column(BigInteger, nullable=False, default=0)
+    dislikes = Column(BigInteger, nullable=False, default=0)
+    views = Column(BigInteger, nullable=False, default=0)
 
     post = relationship(
         "Posts",

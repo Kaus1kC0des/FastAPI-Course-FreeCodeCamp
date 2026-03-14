@@ -69,7 +69,13 @@ async def delete_post_by_id(id: int, db: AsyncSession = Depends(get_db_async)):
 
 @router.put("/{id}", status_code=200)
 async def update_post_by_id(
-    id: int, post: PostUpdate, db: AsyncSession = Depends(get_db_async)
+    id: int, post: PostUpdate, db: Annotated[AsyncSession, Depends(get_db_async)]
 ):
     result = await post_service.update_post(id, post, db)
     return result
+
+
+@router.get("/tags/{tag}", response_model=list[PostListResponse])
+async def get_post_by_tag(tag: str, db: Annotated[AsyncSession, Depends(get_db_async)]):
+    response = await post_service.fetch_posts(db, tag=tag, no_content=True)
+    return response

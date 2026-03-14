@@ -49,6 +49,7 @@ def apply_post_filters(
         query = (
             query.join(PostTags, PostTags.post_id == Posts.id)
             .join(Tags, Tags.id == PostTags.tag_id)
+            .where(Tags.tag == tag)
             .distinct(Posts.id)
         )
     return query
@@ -73,7 +74,7 @@ async def fetch_posts(
     *,
     post_id: int | None = None,
     user_id: int | None = None,
-    tag: str | List[str] | None = None,
+    tag: str | None = None,
     latest: bool | None = None,
     offset: int | None = None,
     limit: int | None = None,

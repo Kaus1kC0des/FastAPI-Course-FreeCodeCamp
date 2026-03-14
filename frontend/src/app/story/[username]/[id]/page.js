@@ -6,6 +6,7 @@ import {useAuth} from "@clerk/nextjs";
 import {api} from "@/lib/api";
 import {AlertMessage} from "@/components/AlertMessage";
 import {Skeleton} from "@/components/ui/skeleton";
+import {Bookmark, Heart, MessageCircle} from "lucide-react";
 
 function toDisplayDate(isoDate) {
     if (!isoDate) return "Unknown date";
@@ -125,6 +126,23 @@ export default function StoryPage() {
                             ))}
                         </div>
                     )}
+
+                    <div className="flex items-center justify-between border-y border-gray-200 py-3 text-sm text-gray-600">
+                        <div className="flex items-center gap-6">
+                            <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
+                                <Heart className="h-4 w-4"/>
+                                Like
+                            </button>
+                            <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
+                                <MessageCircle className="h-4 w-4"/>
+                                Comment
+                            </button>
+                        </div>
+                        <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
+                            <Bookmark className="h-4 w-4"/>
+                            Save
+                        </button>
+                    </div>
                 </header>
 
                 <section

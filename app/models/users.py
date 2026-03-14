@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Text, VARCHAR, Date, Integer, TEXT
+from sqlalchemy import Column, Text, VARCHAR, BigInteger, TEXT
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from app.database import Base
@@ -7,7 +7,7 @@ from app.database import Base
 class Users(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     first_name = Column(VARCHAR(255), nullable=False)
     last_name = Column(VARCHAR(255), nullable=False)
     phone = Column(Text)
