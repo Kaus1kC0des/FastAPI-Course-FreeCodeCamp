@@ -1,7 +1,15 @@
 import Link from "next/link";
 import {Button} from "@/components/ui/button";
+import {auth} from "@clerk/nextjs/server";
+import {redirect} from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+    const {userId} = await auth();
+    
+    if (userId) {
+        redirect("/home");
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-start">
             <section className="max-w-5xl px-4 md:px-6 text-left ml-4 md:ml-[15%] mr-4">

@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import {Geist, Geist_Mono} from 'next/font/google'
 import './globals.css'
 import {SidebarProvider} from "@/components/ui/sidebar";
+import { Providers } from './providers';
 import {AppSidebar} from "@/components/SideBar";
 
 const geistSans = Geist({
@@ -22,22 +23,24 @@ export const metadata = [
 
 export default function RootLayout({children}) {
     return (
-        <ClerkProvider>
-            <html>
+        <html>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-            >
-            <SidebarProvider defaultOpen={true}>
-                <AppSidebar/>
-                <div className="flex flex-col flex-1">
-                    <Header/>
-                    <main className="flex-1">
-                        {children}
-                    </main>
-                </div>
-            </SidebarProvider>
+                >
+                <Providers>
+                    <ClerkProvider>
+                        <SidebarProvider defaultOpen={false}>
+                            <AppSidebar/>
+                            <div className="flex flex-col flex-1">
+                                <Header/>
+                                <main className="flex-1">
+                                    {children}
+                                </main>
+                            </div>
+                        </SidebarProvider>
+                    </ClerkProvider>
+                </Providers>
             </body>
-            </html>
-        </ClerkProvider>
+        </html>
     )
 }

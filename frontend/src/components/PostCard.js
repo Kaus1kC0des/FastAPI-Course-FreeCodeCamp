@@ -1,5 +1,7 @@
+"use client";
 import Link from "next/link";
 import {Bookmark, Heart, MessageCircle} from "lucide-react";
+import {useBookmark} from "@/app/hooks/useBookmark";
 
 export default function PostCard({post}) {
     const {
@@ -7,10 +9,18 @@ export default function PostCard({post}) {
         slug,
         author,
     } = post;
+
     const authorName = author?.name || "Unknown author";
+    const isBookmarked = post.isBookmarked;
+    const {mutate: toggleBookmark} = useBookmark();
+
+    const handleBookmark = () => {
+        toggleBookmark({postId: post.id, isBookmarked});
+    };
 
     return (
-        <article className="rounded-xl border border-gray-200 bg-white p-4 transition-colors duration-200 hover:bg-gray-50">
+        <article
+            className="rounded-xl border border-gray-200 bg-white p-4 transition-colors duration-200 hover:bg-gray-50">
             <Link href={slug || "/home"} className="block space-y-3">
                 <h2 className="text-xl font-semibold leading-snug text-gray-900">{title}</h2>
 
@@ -40,9 +50,10 @@ export default function PostCard({post}) {
                         Comment
                     </button>
                 </div>
-                <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
-                    <Bookmark className="h-4 w-4"/>
-                    Save
+                <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900"
+                        onClick={handleBookmark}>
+                    <Bookmark className={`h-4 w-4 ${isBookmarked ? "fill-current text-blue-600" : ""}`}/>
+                    {isBookmarked ? "Saved" : "Save"}
                 </button>
             </div>
         </article>

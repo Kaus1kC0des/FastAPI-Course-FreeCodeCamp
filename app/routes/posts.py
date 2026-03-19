@@ -20,14 +20,28 @@ router = APIRouter(
 
 @router.get("/all", status_code=200, response_model=list[PostListResponse])
 async def get_all_posts(
+    user_id: Annotated[int, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db_async),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
 ):
     result = await post_service.fetch_posts(
-        db, offset=offset, limit=limit, no_content=True
+        db, viewer_user_id=user_id, offset=offset, limit=limit, no_content=True
     )
     return result
+
+
+@router.get("/bookmarks", response_model=list[PostListResponse])
+async def get_bookmarked_post_ids(
+    user_id: Annotated[int, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db_async)],
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
+):
+    response = await post_service.retrieve_bookmarks(
+        db, user_id, limit=limit, offset=offset
+    )
+    return response
 
 
 @router.get("/latest", response_model=PostResponse)
@@ -45,8 +59,12 @@ async def get_post_count(db: AsyncSession = Depends(get_db_async)):
 
 
 @router.get("/{post_id}", response_model=PostDetailResponse)
-async def get_post_by_id(post_id: int, db: AsyncSession = Depends(get_db_async)):
-    result = await post_service.fetch_posts(db, post_id=post_id)
+async def get_post_by_id(
+    post_id: int,
+    user_id: Annotated[int, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db_async),
+):
+    result = await post_service.fetch_posts(db, viewer_user_id=user_id, post_id=post_id)
     return result
 
 
@@ -76,6 +94,32 @@ async def update_post_by_id(
 
 
 @router.get("/tags/{tag}", response_model=list[PostListResponse])
-async def get_post_by_tag(tag: str, db: Annotated[AsyncSession, Depends(get_db_async)]):
-    response = await post_service.fetch_posts(db, tag=tag, no_content=True)
+async def get_post_by_tag(
+    tag: str,
+    user_id: Annotated[int, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db_async)],
+):
+    response = await post_service.fetch_posts(
+        db, tag=tag, viewer_user_id=user_id, no_content=True
+    )
+    return response
+
+
+@router.post("/bookmark/{post_id}")
+async def bookmark_post(
+    user_id: Annotated[int, Depends(get_current_user)],
+    post_id: int,
+    db: Annotated[AsyncSession, Depends(get_db_async)],
+):
+    response = await post_service.bookmark_post(db, user_id, post_id)
+    return response
+
+
+@router.delete("/bookmark/{post_id}")
+async def unbookmark_post(
+    user_id: Annotated[int, Depends(get_current_user)],
+    post_id: int,
+    db: Annotated[AsyncSession, Depends(get_db_async)],
+):
+    response = await post_service.unbookmark_post(db, user_id, post_id)
     return response

@@ -2,7 +2,7 @@ from sqlalchemy import Column, BigInteger, ForeignKey
 from app.database import Base
 
 
-class BookMarks(Base):
+class Bookmarks(Base):
     __tablename__ = "bookmarks"
 
     post_id = Column(

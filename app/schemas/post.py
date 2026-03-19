@@ -51,8 +51,8 @@ class PostListResponse(BaseModel):
     author_id: int
     tags: List[PostTagSummary] = []
     author: PostAuthorSummary
-
-    model_config = ConfigDict(from_attributes=True)
+    is_bookmarked: bool = Field(default=False, alias="isBookmarked")
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class PostDetailResponse(PostBase):
@@ -62,5 +62,6 @@ class PostDetailResponse(PostBase):
     author_id: int
     tags: List[PostTagSummary] = []
     author: PostAuthorSummary
+    is_bookmarked: bool = Field(default=False, alias="isBookmarked")
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)

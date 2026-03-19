@@ -1,5 +1,6 @@
 import {clsx} from "clsx";
 import {twMerge} from "tailwind-merge"
+import {api} from "@/lib/api";
 
 export function cn(...inputs) {
     return twMerge(clsx(inputs));
@@ -50,5 +51,52 @@ export function mapPostForCard(post) {
             bio: post.author?.email || "No bio available yet.",
             image: post.author?.image || null,
         },
+        isBookmarked: Boolean(post.isBookmarked ?? post.is_bookmarked),
     };
 }
+
+const toggleBookmark = async (postId, currentState, getToken, setPosts) => {
+    try {
+        const token = await getToken();
+
+        if (!currentState) {
+            await api.post(`/posts/bookmark/${postId}`, null, {
+                headers: {Authorization: `Bearer ${token}`},
+            });
+        } else {
+            await api.delete(`/posts/bookmark/${postId}`, {
+                headers: {Authorization: `Bearer ${token}`},
+            });
+        }
+        setPosts((prevPosts) =>
+            prevPosts.map((p) =>
+                p.id === postId
+                    ? {...p, isBookmarked: !currentState}
+                    : p
+            )
+        );
+
+    } catch (err) {
+        console.error("Bookmark error:", err);
+    }
+};
+
+export async function fetchPosts(token) {
+    try {
+        const token = await getToken();
+        const response = await api.get("/posts/all", {
+            headers: {Authorization: `Bearer ${token}`},
+        });
+        const mappedPosts = Array.isArray(response.data)
+            ? response.data.map(mapPostForCard)
+            : [];
+        setPosts(mappedPosts);
+    } catch (err) {
+        setError({
+            title: "Failed to load posts",
+            message: err?.response?.data?.detail || "Could not fetch posts from backend.",
+        });
+    } finally {
+        setLoading(false);
+    }
+};

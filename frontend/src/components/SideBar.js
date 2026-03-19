@@ -23,7 +23,7 @@ export function AppSidebar() {
                         </SidebarMenuItem>
                         <SidebarMenuItem>
                             <SidebarMenuButton asChild size="xl">
-                                <a href="/new-story" className="text-xl">
+                                <a href="/library" className="text-xl">
                                     <Bookmark className="!size-6"/>
                                     Library
                                 </a>

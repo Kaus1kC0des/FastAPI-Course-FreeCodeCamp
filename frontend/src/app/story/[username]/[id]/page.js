@@ -1,12 +1,11 @@
 "use client";
 
-import {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
-import {useAuth} from "@clerk/nextjs";
-import {api} from "@/lib/api";
 import {AlertMessage} from "@/components/AlertMessage";
 import {Skeleton} from "@/components/ui/skeleton";
 import {Bookmark, Heart, MessageCircle} from "lucide-react";
+import {usePost} from "@/app/hooks/usePost";
+import {useBookmark} from "@/app/hooks/useBookmark";
 
 function toDisplayDate(isoDate) {
     if (!isoDate) return "Unknown date";
@@ -25,33 +24,16 @@ function toReadingTime(html) {
 
 export default function StoryPage() {
     const {id, username} = useParams();
-    const {getToken} = useAuth();
-    const [story, setStory] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const {data: story, isLoading, isError, error: queryError} = usePost(id);
+    const {mutate: toggleBookmark} = useBookmark();
 
-    useEffect(() => {
-        const fetchStory = async () => {
-            try {
-                const token = await getToken();
-                const response = await api.get(`/posts/${id}`, {
-                    headers: {Authorization: `Bearer ${token}`},
-                });
-                setStory(response.data);
-            } catch (err) {
-                setError({
-                    title: "Failed to load story",
-                    message: err?.response?.data?.detail || "Could not fetch this story.",
-                });
-            } finally {
-                setLoading(false);
-            }
-        };
+    const handleBookmark = () => {
+        if (story) {
+            toggleBookmark({postId: story.id, isBookmarked: story.isBookmarked});
+        }
+    };
 
-        if (id) fetchStory();
-    }, [id, getToken]);
-
-    if (loading) {
+    if (isLoading) {
         return (
             <main className="mx-auto w-full max-w-3xl px-6 py-12 space-y-6">
                 <Skeleton className="h-12 w-3/4"/>
@@ -63,10 +45,13 @@ export default function StoryPage() {
         );
     }
 
-    if (error) {
+    if (isError) {
         return (
             <main className="mx-auto w-full max-w-3xl px-6 py-12">
-                <AlertMessage title={error.title} message={error.message}/>
+                <AlertMessage 
+                    title="Failed to load story" 
+                    message={queryError?.response?.data?.detail || queryError?.message || "Could not fetch this story."}
+                />
             </main>
         );
     }
@@ -127,7 +112,8 @@ export default function StoryPage() {
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between border-y border-gray-200 py-3 text-sm text-gray-600">
+                    <div
+                        className="flex items-center justify-between border-y border-gray-200 py-3 text-sm text-gray-600">
                         <div className="flex items-center gap-6">
                             <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
                                 <Heart className="h-4 w-4"/>
@@ -138,9 +124,13 @@ export default function StoryPage() {
                                 Comment
                             </button>
                         </div>
-                        <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
-                            <Bookmark className="h-4 w-4"/>
-                            Save
+                        <button 
+                            type="button" 
+                            className="inline-flex items-center gap-1.5 hover:text-gray-900"
+                            onClick={handleBookmark}
+                        >
+                            <Bookmark className={`h-4 w-4 ${story.isBookmarked ? "fill-current text-blue-600" : ""}`}/>
+                            {story.isBookmarked ? "Saved" : "Save"}
                         </button>
                     </div>
                 </header>
