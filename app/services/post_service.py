@@ -2,9 +2,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import defer
 from app.services import tag_service
 from app.models import Posts, Bookmarks
-from app.models.post_tags import PostTags
-from app.models.tags import Tags
-from app.models.post_metrics import PostMetrics
+from app.models import PostTags, Tags, PostMetrics, Likes, Comments
 from app.schemas import PostUpdate, PostCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete, update, and_

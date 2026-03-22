@@ -14,6 +14,7 @@ dependencies = [
     "flake8>=7.3.0",
     "gradient>=3.12.0",
     "gradient-adk>=0.2.11",
+    "lightning-sdk>=2026.3.17.post0",
     "mypy>=1.19.1",
     "passlib[bcrypt]>=1.7.4",
     "psycopg>=3.3.2",

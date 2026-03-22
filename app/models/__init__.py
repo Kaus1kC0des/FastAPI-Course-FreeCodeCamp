@@ -4,5 +4,16 @@ from .tags import Tags
 from .post_tags import PostTags
 from .post_metrics import PostMetrics
 from .bookmarks import Bookmarks
+from .likes import Likes
+from .comments import Comments
 
-__all__ = ["Posts", "Users", "Tags", "PostTags", "PostMetrics", "Bookmarks"]
+__all__ = [
+    "Posts",
+    "Users",
+    "Tags",
+    "PostTags",
+    "PostMetrics",
+    "Bookmarks",
+    "Likes",
+    "Comments",
+]
