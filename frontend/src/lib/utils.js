@@ -52,6 +52,8 @@ export function mapPostForCard(post) {
             image: post.author?.image || null,
         },
         isBookmarked: Boolean(post.isBookmarked ?? post.is_bookmarked),
+        isLiked: Boolean(post.isLiked ?? post.is_liked),
+        likesCount: Number(post.likesCount ?? post.likes_count ?? 0),
     };
 }
 

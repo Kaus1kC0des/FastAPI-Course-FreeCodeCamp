@@ -1,8 +1,7 @@
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import defer
 from app.services import tag_service
-from app.models import Posts, Bookmarks
-from app.models import PostTags, Tags, PostMetrics, Likes, Comments
+from app.models import Posts, Bookmarks, PostTags, Tags, PostMetrics, Comments, Likes
 from app.schemas import PostUpdate, PostCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete, update, and_
@@ -27,8 +26,23 @@ def base_post_query(viewer_user_id: int | None = None, no_content: bool | None =
     options = [selectinload(Posts.author), selectinload(Posts.tags)]
     if no_content:
         options.append(defer(Posts.content))
+
+    likes_count_sq = (
+        select(
+            Likes.post_id.label("post_id"),
+            func.count(Likes.user_id).label("likes_count"),
+        )
+        .group_by(Likes.post_id)
+        .subquery()
+    )
+
     return (
-        select(Posts, Bookmarks.post_id.is_not(None).label("is_bookmarked"))
+        select(
+            Posts,
+            Bookmarks.post_id.is_not(None).label("is_bookmarked"),
+            Likes.post_id.is_not(None).label("is_liked"),
+            func.coalesce(likes_count_sq.c.likes_count, 0).label("likes_count"),
+        )
         .join(PostMetrics, PostMetrics.post_id == Posts.id, isouter=True)
         .outerjoin(
             Bookmarks,
@@ -37,6 +51,10 @@ def base_post_query(viewer_user_id: int | None = None, no_content: bool | None =
                 Bookmarks.user_id == viewer_user_id,
             ),
         )
+        .outerjoin(
+            Likes, and_(Likes.post_id == Posts.id, Likes.user_id == viewer_user_id)
+        )
+        .outerjoin(likes_count_sq, likes_count_sq.c.post_id == Posts.id)
         .options(*options)
     )
 
@@ -64,7 +82,10 @@ def apply_post_filters(
 def order_and_paginate(
     query, *, latest: bool | None, offset: int | None, limit: int | None
 ):
-    query = query.order_by(Posts.last_updated.desc())
+    query = query.order_by(
+        func.coalesce(Posts.last_updated, Posts.created_at).desc(),
+        Posts.id.desc(),
+    )
     if latest:
         return query.limit(1)
 
@@ -108,14 +129,18 @@ async def fetch_posts(
                         detail="No posts available",
                     )
             logger.info(f"Post with {post_id=} was returned")
-            post, is_bookmarked = row
+            post, is_bookmarked, is_liked, likes_count = row
             post.is_bookmarked = bool(is_bookmarked)
+            post.is_liked = bool(is_liked)
+            post.likes_count = int(likes_count or 0)
             return post
 
         rows = results.all()
         posts = []
-        for post, is_bookmarked in rows:
+        for post, is_bookmarked, is_liked, likes_count in rows:
             post.is_bookmarked = bool(is_bookmarked)
+            post.is_liked = bool(is_liked)
+            post.likes_count = int(likes_count or 0)
             posts.append(post)
         return posts
     except HTTPException:
@@ -203,9 +228,26 @@ async def retrieve_bookmarks(
     db: AsyncSession, user_id: int, limit: int | None, offset: int | None
 ):
     try:
+        likes_count_sq = (
+            select(
+                Likes.post_id.label("post_id"),
+                func.count(Likes.user_id).label("likes_count"),
+            )
+            .group_by(Likes.post_id)
+            .subquery()
+        )
         stmt = (
-            select(Posts, Bookmarks.post_id.is_not(None).label("is_bookmarked"))
+            select(
+                Posts,
+                Bookmarks.post_id.is_not(None).label("is_bookmarked"),
+                Likes.post_id.is_not(None).label("is_liked"),
+                func.coalesce(likes_count_sq.c.likes_count, 0).label("likes_count"),
+            )
             .join(Bookmarks, Bookmarks.post_id == Posts.id)
+            .outerjoin(
+                Likes, and_(Likes.post_id == Posts.id, Likes.user_id == user_id)
+            )
+            .outerjoin(likes_count_sq, likes_count_sq.c.post_id == Posts.id)
             .where(Bookmarks.user_id == user_id)
             .options(
                 selectinload(Posts.author),
@@ -217,8 +259,10 @@ async def retrieve_bookmarks(
         result = await db.execute(stmt)
         rows = result.all()
         posts = []
-        for post, is_bookmarked in rows:
+        for post, is_bookmarked, is_liked, likes_count in rows:
             post.is_bookmarked = bool(is_bookmarked)
+            post.is_liked = bool(is_liked)
+            post.likes_count = int(likes_count or 0)
             posts.append(post)
         return posts
 
@@ -241,3 +285,33 @@ async def unbookmark_post(db: AsyncSession, user_id: int, post_id: int):
         logger.error(f"Error {e} occurred")
         await db.rollback()
         raise
+
+
+async def like_post(db: AsyncSession, user_id: int, post_id: int):
+    try:
+        stmt = (
+            insert(Likes)
+            .values(post_id=post_id, user_id=user_id)
+            .on_conflict_do_nothing()
+        )
+        await db.execute(stmt)
+        await db.commit()
+        logger.info(f"User with {user_id=} liked post with {post_id=}")
+        return {"message": "Post liked successfully"}
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error {e} occurred")
+        return {"error": "Unable to like post"}
+
+
+async def unlike_post(db: AsyncSession, user_id: int, post_id: int):
+    try:
+        stmt = delete(Likes).where(Likes.user_id == user_id, Likes.post_id == post_id)
+        await db.execute(stmt)
+        await db.commit()
+        logger.info(f"User with {user_id=} unliked Post with {post_id=}")
+        return {"result": "Success"}
+    except Exception as e:
+        logger.info(f"Error {e} occurred")
+        await db.rollback()
+        return {"error": "Failed"}

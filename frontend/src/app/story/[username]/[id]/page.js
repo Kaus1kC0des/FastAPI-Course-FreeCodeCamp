@@ -6,6 +6,7 @@ import {Skeleton} from "@/components/ui/skeleton";
 import {Bookmark, Heart, MessageCircle} from "lucide-react";
 import {usePost} from "@/app/hooks/usePost";
 import {useBookmark} from "@/app/hooks/useBookmark";
+import {useLike} from "@/app/hooks/useLike";
 
 function toDisplayDate(isoDate) {
     if (!isoDate) return "Unknown date";
@@ -26,10 +27,16 @@ export default function StoryPage() {
     const {id, username} = useParams();
     const {data: story, isLoading, isError, error: queryError} = usePost(id);
     const {mutate: toggleBookmark} = useBookmark();
+    const {mutate: toggleLike} = useLike();
 
     const handleBookmark = () => {
         if (story) {
             toggleBookmark({postId: story.id, isBookmarked: story.isBookmarked});
+        }
+    };
+    const handleLike = () => {
+        if (story) {
+            toggleLike({postId: Number(story.id), isLiked: story.isLiked});
         }
     };
 
@@ -115,9 +122,13 @@ export default function StoryPage() {
                     <div
                         className="flex items-center justify-between border-y border-gray-200 py-3 text-sm text-gray-600">
                         <div className="flex items-center gap-6">
-                            <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
-                                <Heart className="h-4 w-4"/>
-                                Like
+                            <button
+                                type="button"
+                                className="inline-flex items-center gap-1.5 hover:text-gray-900"
+                                onClick={handleLike}
+                            >
+                                <Heart className={`h-4 w-4 ${story.isLiked ? "fill-current text-red-600" : ""}`}/>
+                                {story.likesCount ?? 0}
                             </button>
                             <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
                                 <MessageCircle className="h-4 w-4"/>

@@ -123,3 +123,23 @@ async def unbookmark_post(
 ):
     response = await post_service.unbookmark_post(db, user_id, post_id)
     return response
+
+
+@router.post("/like/{post_id}")
+async def like_post(
+    post_id: int,
+    user_id: Annotated[int, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db_async)],
+):
+    result = await post_service.like_post(db, user_id, post_id)
+    return result
+
+
+@router.delete("/like/{post_id}")
+async def unlike_post(
+    post_id: int,
+    user_id: Annotated[int, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db_async)],
+):
+    result = await post_service.unlike_post(db, user_id, post_id)
+    return result

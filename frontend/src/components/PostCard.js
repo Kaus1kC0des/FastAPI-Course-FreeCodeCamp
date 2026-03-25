@@ -2,6 +2,7 @@
 import Link from "next/link";
 import {Bookmark, Heart, MessageCircle} from "lucide-react";
 import {useBookmark} from "@/app/hooks/useBookmark";
+import {useLike} from "@/app/hooks/useLike";
 
 export default function PostCard({post}) {
     const {
@@ -12,10 +13,16 @@ export default function PostCard({post}) {
 
     const authorName = author?.name || "Unknown author";
     const isBookmarked = post.isBookmarked;
+    const isLiked = post.isLiked;
+    const likesCount = post.likesCount ?? 0;
     const {mutate: toggleBookmark} = useBookmark();
+    const {mutate: toggleLike} = useLike();
 
     const handleBookmark = () => {
         toggleBookmark({postId: post.id, isBookmarked});
+    };
+    const handleLike = () => {
+        toggleLike({postId: Number(post.id), isLiked});
     };
 
     return (
@@ -41,9 +48,13 @@ export default function PostCard({post}) {
 
             <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3 text-sm text-gray-600">
                 <div className="flex items-center gap-5">
-                    <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
-                        <Heart className="h-4 w-4"/>
-                        Like
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 hover:text-gray-900"
+                        onClick={handleLike}
+                    >
+                        <Heart className={`h-4 w-4 ${isLiked ? "fill-current text-red-600" : ""}`}/>
+                        {likesCount}
                     </button>
                     <button type="button" className="inline-flex items-center gap-1.5 hover:text-gray-900">
                         <MessageCircle className="h-4 w-4"/>
